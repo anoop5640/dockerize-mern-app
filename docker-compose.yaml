@@ -1,0 +1,55 @@
+version: '3.8'
+services:
+  mongo:
+    image: mongo:6.0.5  # Official MongoDB image
+    container_name: mongo-db  # Name of the container
+    ports:
+      - "8000:27017"  # Map host port 27017 to container port 27017
+    volumes:
+      - mongodbdata: /data/db
+    networks:
+      - mern-net
+  # Node.js Application
+  server:
+    build:
+      context: ./API-jokes  # Path to the Dockerfile directory
+      dockerfile: Dockerfile
+    image: node-api  # Name of the Docker image
+    container_name: server-c1  # Name of the container
+    ports:
+      - "5000:5000"  # Map host port 3000 to container port 3000
+    environment:
+      - MONGO_URI=mongodb://mern-net/mukeshdb  # MongoDB connection string
+    depends_on:
+      - mongo  # Ensure MongoDB starts before the app
+    networks:
+      - mern-net
+    volumes:
+      - ./API-jokes:/app
+      - /app/node_modules
+
+  client:
+    stdin_open: true
+    tty: true
+    build:
+      context: ./jokes-client  # Path to the Dockerfile directory
+      dockerfile: Dockerfile
+    image: jokes-api  # Name of the Docker image
+    container_name: client-c1  # Name of the container
+    ports:
+      - "3000:3000"  # Map host port 3000 to container port 3000
+    environment:
+      - MONGO_URI=mongodb://mern-net/mukeshdb  # MongoDB connection string
+    depends_on:
+      - mongo  # Ensure MongoDB starts before the app
+    networks:
+      - mern-net
+    volumes:
+      - ./jokes-client/src:/app/src
+      - /app/node_modules
+
+volumes:
+  mongo:
+
+networks:
+  mern-net:
